@@ -1,0 +1,22 @@
+# secrets (keep .env.example)
+.env
+
+# runtime data
+data/
+seen.db
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# editors and OS
+.idea/
+.vscode/
+.DS_Store
+
+# archives
+*.zip

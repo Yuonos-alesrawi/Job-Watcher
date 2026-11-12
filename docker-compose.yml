@@ -1,0 +1,20 @@
+services:
+  redis:
+    image: redis:7-alpine
+  worker:
+    build: .
+    command: celery -A tasks worker -l info
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      JOBS_DB: /data/seen.db
+      COMPANIES_FILE: /data/companies.json
+    volumes: ["./data:/data"]
+    depends_on: [redis]
+  beat:
+    build: .
+    command: celery -A tasks beat -l info
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on: [redis]

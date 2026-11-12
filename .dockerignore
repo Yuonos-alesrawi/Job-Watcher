@@ -1,0 +1,20 @@
+# secrets and runtime data must never be baked into the image
+.env
+data/
+data/seen.db
+*.db
+
+# Python and tooling noise
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# repo files not needed inside the container
+.git/
+.gitignore
+.dockerignore
+.idea/
+.vscode/
+*.zip
