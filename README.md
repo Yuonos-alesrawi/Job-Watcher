@@ -60,4 +60,5 @@ The order of alerts is decided by `score`: how many of your skills appear in the
 - The rules are text-based and can be wrong on some phrasings. Review the excluded-jobs log during the first days and adjust `filters.py`.
 - The first run may find dozens of old postings. At most 20 alerts are sent per run (`MAX_ALERTS_PER_RUN`); the rest are recorded as seen.
 - A passing job does not mean the company hires from your country. Check eligibility before applying.
-- Do not lower `PAUSE_BETWEEN_COMPANIES` and do not check more often than hourly, out of respect for the public APIs.
+- Boards are fetched in parallel (`MAX_WORKERS`, default 12, at most `PER_SOURCE_CONCURRENCY`=4 requests at once to one site). Do not raise these much and do not check more often than hourly.
+- A board that returns 404 is remembered and skipped for `DEAD_BOARD_RETRY_DAYS` (7) days, so wrong slugs stop costing time.

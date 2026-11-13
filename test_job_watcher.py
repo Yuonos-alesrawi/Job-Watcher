@@ -56,7 +56,8 @@ class FilterTests(unittest.TestCase):
         self.assertNotIn("experience_years", self.reasons(text="Founded 10 years ago."))
 
     def test_region_markers_are_allowed(self):
-        self.assertTrue(evaluate(job(location="Remote (EMEA)")).keep)
+        self.assertTrue(evaluate(job(location="Remote - Worldwide")).keep)
+        self.assertIn("region_restricted", self.reasons(location="Remote (EMEA)"))  # filters.py: only worldwide markers are open
         self.assertIn("region_restricted", self.reasons(location="Remote - Canada"))
 
 
@@ -114,6 +115,29 @@ class WatcherTests(unittest.TestCase):
         with mock.patch.object(sources, "fetch", side_effect=boom), mock.patch.object(watcher.time, "sleep"):
             s = watcher.run_check([{"source": "lever", "name": "nope"}], db_path=":memory:")
         self.assertEqual(s["errors"], 1)
+
+    def test_404_board_is_skipped_next_time(self):
+        import os, tempfile, requests
+        path = os.path.join(tempfile.mkdtemp(), "s.db")
+        resp = requests.Response(); resp.status_code = 404
+        calls = []
+        def boom(*a):
+            calls.append(a); raise requests.HTTPError("404", response=resp)
+        entry = [{"source": "lever", "name": "gone"}]
+        for _ in range(2):
+            with mock.patch.object(sources, "fetch", side_effect=boom), mock.patch.object(watcher.time, "sleep"):
+                s = watcher.run_check(entry, db_path=path)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(s["skipped_dead"], 1)
+
+    def test_many_boards_in_parallel(self):
+        boards = [{"source": "ashby", "name": f"c{i}"} for i in range(30)]
+        def fake(src, name):
+            return iter([Job("ashby", name, "1", "Junior Backend Engineer", "Remote - Worldwide", None, "u", "Python")])
+        with mock.patch.object(sources, "fetch", side_effect=fake), \
+             mock.patch.object(watcher.notify, "send"), mock.patch.object(watcher.time, "sleep"):
+            s = watcher.run_check(boards, db_path=":memory:")
+        self.assertEqual((s["fetched"], s["kept"], s["errors"]), (30, 30, 0))
 
 
 if __name__ == "__main__":
